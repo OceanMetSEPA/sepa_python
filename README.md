@@ -29,6 +29,6 @@ The contents of this folder can be inspected using
 	
 **sepa_tools** - python package with various tools 
 
-	* dict_tools - 
+	* dict_tools - filter, compare, display sizes, add items
 	* string_tools - string_finder, file_finder, closest_string_match
 	* load_mat_file - create python dict from .mat file
