@@ -15,6 +15,8 @@ from scipy.io import savemat
 import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 
 # custom SEPA imports
 from part_processing.concentration import surface_concentration_files_to_dict
@@ -103,6 +105,76 @@ total_conc=sum_sparse_dict(conc_per_farm_scaled) # ~30s
 #%% time-average
 time_average_conc=np.mean(total_conc,axis=1)
 time_average_conc.shape
+
+#%% Plot time-average
+
+mesh_file=file_finder(model_path,'meshStruct.mat')[0]
+mesh_dict=load_mat_file(mesh_file)
+meshIndices=mesh_dict['meshIndices']
+xMesh=mesh_dict['xMesh']
+yMesh=mesh_dict['yMesh']
+zMesh=mesh_dict['zMesh']
+# Example: ensure meshIndices is zero-indexed for matplotlib
+triangles = meshIndices - 1 if meshIndices.min() == 1 else meshIndices
+
+# Flatten the x, y, z arrays if needed
+x = xMesh.flatten()
+y = yMesh.flatten()
+z = zMesh.flatten()
+
+# Create Triangulation object
+triang = tri.Triangulation(x, y, triangles)
+
+# --- Fix triangle indices (0-indexed) ---
+triangles = meshIndices - 1 if meshIndices.min() == 1 else meshIndices
+
+# --- Fix concentration (1 value per triangle) ---
+concentration = np.asarray(time_average_conc).squeeze()
+
+# Cap concentration at 1
+conc_clipped = np.minimum(concentration, 1.0)
+
+# --- Bathymetry base layer (deep = dark) ---
+triang = tri.Triangulation(x, y, triangles)
+
+fig, ax = plt.subplots(figsize=(11, 9))
+
+tpc_bathy = ax.tripcolor(
+    triang,
+    z,
+    cmap='gray',      #  grayscale: deep = dark
+    edgecolors='none',  # no edges
+    linewidth=0
+)
+
+cb1 = plt.colorbar(tpc_bathy, ax=ax)
+cb1.set_label("Bathymetry (m)")
+
+# --- Concentration overlay (non-zero only) ---
+mask = conc_clipped > 0
+nonzero_tri = triangles[mask]
+conc_vals = conc_clipped[mask]
+
+if nonzero_tri.size > 0:
+    triang_conc = tri.Triangulation(x, y, nonzero_tri)
+
+    tpc_conc = ax.tripcolor(
+        triang_conc,
+        conc_vals,
+        cmap='autumn_r',   # yellow → red, similar to flipud(autumn)
+        edgecolors='none',
+        alpha=0.6
+    )
+
+    cb2 = plt.colorbar(tpc_conc, ax=ax)
+    cb2.set_label("Concentration (capped at 1)")
+
+ax.set_aspect('equal')
+ax.set_xlabel("Longitude")
+ax.set_ylabel("Latitude")
+ax.set_title("Bathymetry (deep = dark) + Concentration Overlay (yellow→red)")
+
+plt.show()
 
 #%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Generate exposure from conc_per_farm above
