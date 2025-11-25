@@ -21,7 +21,7 @@ import matplotlib.tri as tri
 # custom SEPA imports
 from part_processing.concentration import surface_concentration_files_to_dict
 from part_processing.tools import source_term_version_data
-from part_processing.tools import scale_conc_struct
+from part_processing.tools import scale_conc_dict
 from part_processing.tools.scale_stuff import biomass_to_lice
 
 from sepa_tools.string_tools import file_finder
@@ -97,7 +97,7 @@ farm_info=source_term_version_data(fn,0)
 # lice scale factor -
 sf=biomass_to_lice(farm_info.Biomass) # (118,)
 # scale concs -
-conc_per_farm_scaled=scale_conc_struct(conc_per_farm,sf)
+conc_per_farm_scaled=scale_conc_dict(conc_per_farm,sf)
 
 #%% Get total conc
 total_conc=sum_sparse_dict(conc_per_farm_scaled) # ~30s

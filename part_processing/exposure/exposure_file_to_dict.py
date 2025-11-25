@@ -51,5 +51,5 @@ def exposure_file_to_dict(exposure_file,geostuff=None):
     s['modelDomain']=model_domain_from_string(str(exposure_file))
     s['Code']=exposure_file.name.replace('.mat','')
 
-    s=s|track_desc|xy|{'total_exposurePerFarm':total_per_farm,'total_exposure':total_exposure}
+    s=s|track_desc|xy|{'total_exposure_per_farm':total_per_farm,'total_exposure':total_exposure}
     return s
